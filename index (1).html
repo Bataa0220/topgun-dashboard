@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Топ Ган Дриллинг — Уурхайн Зардлын Тайлан</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080f1a;--bg2:#0d1829;--bg3:#121f33;--bg4:#172540;
+  --gold:#e8a020;--gold2:#f5c842;--gold3:rgba(232,160,32,.1);
+  --blue:#3b82f6;--green:#22c55e;--red:#ef4444;--purple:#a855f7;
+  --teal:#14b8a6;--orange:#f97316;--text:#e8eaf0;--muted:#64748b;
+  --border:rgba(255,255,255,0.07);
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+
+/* Upload */
+#upload-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;gap:2rem}
+.up-logo{display:flex;align-items:center;gap:10px}
+.up-logo-ico{width:44px;height:44px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.up-logo-txt{font-size:13px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;font-weight:700}
+.up-title{font-size:26px;font-weight:700;text-align:center;background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.up-sub{color:var(--muted);font-size:13px;text-align:center}
+.up-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:560px}
+.up-card{background:var(--bg3);border:2px dashed rgba(232,160,32,.2);border-radius:14px;padding:1.75rem;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.up-card:hover,.up-card.drag{border-color:var(--gold);background:var(--bg4)}
+.up-card.done{border-color:var(--green);border-style:solid}
+.up-card-ico{font-size:34px;margin-bottom:.6rem}
+.up-card-ttl{font-size:12px;font-weight:700;color:var(--gold);margin-bottom:.25rem}
+.up-card-sub{font-size:10px;color:var(--muted)}
+.up-card-file{font-size:11px;color:var(--green);margin-top:.4rem;font-weight:600}
+.up-card input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.up-btn{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#080f1a;border:none;padding:.8rem 2.5rem;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;opacity:.45;pointer-events:none;transition:all .2s}
+.up-btn.on{opacity:1;pointer-events:all;box-shadow:0 8px 24px rgba(232,160,32,.3)}
+
+/* App */
+#app{display:none}
+.topbar{background:var(--bg2);height:54px;padding:0 22px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:9px}
+.logo-ico{width:30px;height:30px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.logo-txt{font-size:11px;letter-spacing:1.5px;color:var(--gold);font-weight:700;text-transform:uppercase}
+.month-tag{background:var(--gold3);color:var(--gold);font-size:11px;padding:3px 11px;border-radius:20px;border:1px solid rgba(232,160,32,.2)}
+.reload-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer}
+.reload-btn:hover{border-color:var(--gold);color:var(--gold)}
+.tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 22px;gap:2px;overflow-x:auto}
+.tab{padding:10px 16px;font-size:11px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;letter-spacing:.5px;text-transform:uppercase;font-weight:500;white-space:nowrap;transition:all .15s}
+.tab:hover{color:var(--text)}.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.page{display:none;padding:18px 22px}.page.active{display:block}
+
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin-bottom:16px}
+.kpi{background:var(--bg3);border-radius:11px;padding:13px 15px;border:1px solid var(--border)}
+.kpi-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px}
+.kpi-val{font-size:21px;font-weight:700;line-height:1}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:3px}
+.kpi-note{font-size:9px;color:rgba(232,160,32,.6);margin-top:2px}
+
+/* Cat */
+.cat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:16px}
+.cat{background:var(--bg3);border-radius:11px;padding:12px;border-left:3px solid}
+.cat-nm{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px}
+.cat-v{font-size:16px;font-weight:700}
+.cat-s{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* Charts */
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px}
+.cg.full{grid-template-columns:1fr}
+.cb{background:var(--bg3);border-radius:11px;padding:14px;border:1px solid var(--border)}
+.cb.w{grid-column:1/-1}
+.ct{font-size:10px;color:var(--gold2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;font-weight:600}
+.cw{position:relative;height:210px}
+.cw.h260{height:260px}
+
+/* Table */
+.tbl{background:var(--bg3);border-radius:11px;border:1px solid var(--border);overflow:hidden;margin-bottom:14px}
+.tbl-hd{display:grid;padding:7px 13px;background:var(--bg2);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border)}
+.tbl-bd .row{display:grid;padding:7px 13px;border-top:1px solid var(--border);font-size:11px;align-items:center}
+.tbl-bd .row:hover{background:rgba(255,255,255,.02)}
+.sec-hd{background:var(--bg2);padding:5px 13px;font-size:9px;text-transform:uppercase;letter-spacing:.5px;border-top:1px solid var(--border);font-weight:700}
+.bdg{font-size:9px;padding:2px 7px;border-radius:10px}
+.ok{background:rgba(34,197,94,.12);color:#4ade80}
+.warn{background:rgba(245,200,66,.12);color:#fbbf24}
+.bad{background:rgba(239,68,68,.12);color:#f87171}
+
+/* Top list */
+.top-g{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px}
+.top-b{background:var(--bg3);border-radius:11px;padding:13px;border:1px solid var(--border)}
+.t-item{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px}
+.t-item:last-child{border:none}
+.rn{width:18px;font-size:11px;font-weight:700}
+.rname{flex:1;font-weight:600}
+.rcat{font-size:9px;color:var(--muted)}
+
+/* Hero */
+.hero{background:linear-gradient(135deg,rgba(232,160,32,.07),rgba(232,160,32,.02));border:1px solid rgba(232,160,32,.18);border-radius:14px;padding:22px;text-align:center;margin-bottom:18px;position:relative;overflow:hidden}
+.hero::before{content:'⛏';position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:72px;opacity:.05}
+.hero-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
+.hero-val{font-size:38px;font-weight:800;background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.1}
+.hero-sub{font-size:12px;color:var(--muted);margin-top:7px}
+
+/* Spinner */
+#loading{display:none;position:fixed;inset:0;background:rgba(8,15,26,.95);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+#loading.show{display:flex}
+.spin{width:44px;height:44px;border:3px solid rgba(232,160,32,.15);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Layout */
+.ov-g{display:grid;grid-template-columns:3fr 2fr;gap:12px;margin-bottom:14px}
+.bk{background:var(--bg3);border-radius:11px;padding:14px;border:1px solid var(--border)}
+.b-item{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border)}
+.b-item:last-child{border:none}
+.b-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.b-lbl{flex:1;font-size:11px}
+.b-amt{font-size:11px;font-weight:600}
+
+@media(max-width:768px){
+  .cat-row{grid-template-columns:1fr 1fr}
+  .cg,.top-g,.ov-g{grid-template-columns:1fr}
+  .cb.w{grid-column:1}
+}
+</style>
+</head>
+<body>
+<div id="loading" style="display:none;position:fixed;inset:0;background:rgba(8,15,26,.95);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:14px"><div class="spin"></div><div style="color:var(--gold);font-size:12px;letter-spacing:1px">Боловсруулж байна...</div></div>
+
+<!-- UPLOAD -->
+<div id="upload-screen">
+  <div class="up-logo">
+    <div class="up-logo-ico">⛏</div>
+    <div class="up-logo-txt">Топ Ган Дриллинг ХХК</div>
+  </div>
+  <div class="up-title">Уурхайн Зардлын Тайлан</div>
+  <div class="up-sub">Хоёр Excel файлаа оруулна уу — тайлан автоматаар үүснэ</div>
+  <div class="up-cards">
+    <div class="up-card" id="c-tulsh" ondragover="ev(event)" ondrop="dp(event,'t')">
+      <input type="file" accept=".xlsx,.xls" onchange="lf(this,'t')">
+      <div class="up-card-ico">⛽</div>
+      <div class="up-card-ttl">Түлшний тайлан</div>
+      <div class="up-card-sub">tulsh-03sar.xlsx</div>
+      <div class="up-card-file" id="fn-tulsh"></div>
+    </div>
+    <div class="up-card" id="c-selbeg" ondragover="ev(event)" ondrop="dp(event,'s')">
+      <input type="file" accept=".xlsx,.xls" onchange="lf(this,'s')">
+      <div class="up-card-ico">🔧</div>
+      <div class="up-card-ttl">Сэлбэг & Дугуй</div>
+      <div class="up-card-sub">selbeg_dugui.xlsx</div>
+      <div class="up-card-file" id="fn-selbeg"></div>
+    </div>
+  </div>
+  <button class="up-btn" id="go-btn" onclick="build()">📊 Тайлан үзэх</button>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="logo"><div class="logo-ico">⛏</div><div class="logo-txt">Топ Ган Дриллинг ХХК</div></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="month-tag" id="m-tag">—</span>
+      <button class="reload-btn" onclick="reset()">↩ Файл солих</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="sw('ov',this)">📊 Нэгтгэл</div>
+    <div class="tab" onclick="sw('fu',this)">⛽ Түлш</div>
+    <div class="tab" onclick="sw('se',this)">🔧 Сэлбэг&Дугуй</div>
+    <div class="tab" onclick="sw('to',this)">🛢 ШТМ</div>
+    <div class="tab" onclick="sw('bu',this)">🚛 Бусад техник</div>
+  </div>
+
+  <div class="page active" id="pg-ov">
+    <div class="hero"><div class="hero-lbl">НИЙТ УУРХАЙН ЗАРДАЛ</div><div class="hero-val" id="ov-tot">—</div><div class="hero-sub" id="ov-sub">Түлш + Сэлбэг & Дугуй + Шатах Тослох Материал</div></div>
+    <div class="kpi-row" id="ov-kpis"></div>
+    <div class="cat-row" id="ov-cats"></div>
+    <div class="ov-g">
+      <div class="cb"><div class="ct">Зардлын бүтэц (сая ₮)</div><div class="cw"><canvas id="c-ov-pie" role="img"></canvas></div></div>
+      <div class="bk" id="ov-bk"></div>
+    </div>
+    <div class="top-g">
+      <div class="top-b"><div class="ct">🏆 Шилдэг — хамгийн бага 1м3 түлш</div><div id="ov-best"></div></div>
+      <div class="top-b"><div class="ct">⚠ Хамгийн их сэлбэг зардалтай</div><div id="ov-worst"></div></div>
+    </div>
+  </div>
+
+  <div class="page" id="pg-fu">
+    <div class="kpi-row" id="f-kpis"></div>
+    <div class="cat-row" id="f-cats"></div>
+    <div class="cg">
+      <div class="cb w"><div class="ct">TONLY 891C — 1м³ ноогдох түлш (дундаж шугамтай)</div><div class="cw h260"><canvas id="c-f-t" role="img"></canvas></div></div>
+      <div class="cb w"><div class="ct">HOWO-105 — 1м³ ноогдох түлш (дундаж шугамтай)</div><div class="cw"><canvas id="c-f-h" role="img"></canvas></div></div>
+      <div class="cb"><div class="ct">Ангиллаар нийт зардлын хуваарилалт</div><div class="cw"><canvas id="c-f-pie" role="img"></canvas></div></div>
+      <div class="cb"><div class="ct">Загварын нийт түлш зарцуулалт (мян.л)</div><div class="cw"><canvas id="c-f-bar" role="img"></canvas></div></div>
+    </div>
+    <div class="tbl" id="f-tbl"></div>
+  </div>
+
+  <div class="page" id="pg-se">
+    <div class="kpi-row" id="s-kpis"></div>
+    <div class="cat-row" id="s-cats"></div>
+    <div class="cg">
+      <div class="cb"><div class="ct">Загварын сэлбэг+дугуй зардал (сая ₮)</div><div class="cw"><canvas id="c-s-bar" role="img"></canvas></div></div>
+      <div class="cb"><div class="ct">Дугуйн зардлын хуваарилалт</div><div class="cw"><canvas id="c-s-pie" role="img"></canvas></div></div>
+    </div>
+    <div class="top-g">
+      <div class="top-b"><div class="ct">🔴 TONLY — ТОП 3 зардалтай техник</div><div id="s-t3"></div></div>
+      <div class="top-b"><div class="ct">🔴 HOWO — ТОП 3 зардалтай техник</div><div id="s-h3"></div></div>
+    </div>
+    <div class="tbl" id="s-tbl"></div>
+  </div>
+
+  <div class="page" id="pg-to">
+    <div class="kpi-row" id="t-kpis"></div>
+    <div class="cg">
+      <div class="cb"><div class="ct">Загварын ШТМ зардал (сая ₮)</div><div class="cw"><canvas id="c-t-bar" role="img"></canvas></div></div>
+      <div class="cb"><div class="ct">Зардлын эзлэх хувь</div><div class="cw"><canvas id="c-t-pie" role="img"></canvas></div></div>
+    </div>
+    <div class="tbl" id="t-tbl"></div>
+  </div>
+
+  <div class="page" id="pg-bu">
+    <div class="kpi-row" id="b-kpis"></div>
+    <div class="cg">
+      <div class="cb w"><div class="ct">Бусад техникийн түлшний зардал (сая ₮)</div><div class="cw h260"><canvas id="c-b-bar" role="img"></canvas></div></div>
+    </div>
+    <div class="tbl" id="b-tbl"></div>
+  </div>
+</div>
+
+<script>
+// ── Embedded data (3-р сар) ───────────────────────────────
+const EMBEDDED={"month": "2025 оны 3-р сар", "tot_fuel": 771497, "tot_cost": 2054217609, "tot_trips": 41772, "tot_prod": 669183, "fuel": [{"park": "TR-201", "model": "TONLY 891C", "fuel": 21040, "cost": 56098427, "moto": 626.0, "trips": 777, "prod": 26418}, {"park": "TR-202", "model": "TONLY 891C", "fuel": 24014, "cost": 63857140, "moto": 632.0, "trips": 851, "prod": 28934}, {"park": "TR-203", "model": "TONLY 891C", "fuel": 23496, "cost": 62295786, "moto": 637.0, "trips": 815, "prod": 27710}, {"park": "TR-204", "model": "TONLY 891C", "fuel": 24049, "cost": 64102548, "moto": 610.0, "trips": 697, "prod": 23698}, {"park": "TR-205", "model": "TONLY 891C", "fuel": 14274, "cost": 37513935, "moto": 442.0, "trips": 523, "prod": 17782}, {"park": "TR-206", "model": "TONLY 891C", "fuel": 19153, "cost": 50789814, "moto": 547.0, "trips": 686, "prod": 23324}, {"park": "TR-207", "model": "TONLY 891C", "fuel": 18986, "cost": 50443947, "moto": 565.0, "trips": 767, "prod": 26078}, {"park": "TR-208", "model": "TONLY 891C", "fuel": 19819, "cost": 52611479, "moto": 607.0, "trips": 741, "prod": 25194}, {"park": "TR-209", "model": "TONLY 891C", "fuel": 20123, "cost": 53465024, "moto": 625.0, "trips": 806, "prod": 27404}, {"park": "TR-210", "model": "TONLY 891C", "fuel": 20600, "cost": 54582188, "moto": 617.0, "trips": 783, "prod": 26622}, {"park": "TR-211", "model": "TONLY 891C", "fuel": 21277, "cost": 56622074, "moto": 635.0, "trips": 817, "prod": 27778}, {"park": "TR-212", "model": "TONLY 891C", "fuel": 20398, "cost": 54230986, "moto": 629.0, "trips": 751, "prod": 25534}, {"park": "TR-214", "model": "TONLY 891C", "fuel": 21987, "cost": 58494784, "moto": 640.0, "trips": 824, "prod": 28016}, {"park": "TR-215", "model": "TONLY 891C", "fuel": 21372, "cost": 56971468, "moto": 607.0, "trips": 759, "prod": 25772}, {"park": "TR-216", "model": "TONLY 891C", "fuel": 20584, "cost": 54451407, "moto": 608.0, "trips": 792, "prod": 26928}, {"park": "TR-219", "model": "TONLY 891C", "fuel": 21461, "cost": 56967311, "moto": 611.0, "trips": 794, "prod": 26996}, {"park": "TR-220", "model": "TONLY 891C", "fuel": 20518, "cost": 54649985, "moto": 643.0, "trips": 799, "prod": 27166}, {"park": "TR-221", "model": "TONLY 891C", "fuel": 21404, "cost": 56928594, "moto": 605.0, "trips": 778, "prod": 26452}, {"park": "TR-222", "model": "TONLY 891C", "fuel": 20499, "cost": 54549522, "moto": 600.0, "trips": 773, "prod": 26282}, {"park": "TR-217", "model": "HOWO-105", "fuel": 12960, "cost": 35031274, "moto": 450.0, "trips": 501, "prod": 13527}, {"park": "TR-218", "model": "HOWO-105", "fuel": 12481, "cost": 33714557, "moto": 437.0, "trips": 474, "prod": 12798}, {"park": "TR-223", "model": "HOWO-105", "fuel": 17067, "cost": 45318408, "moto": 584.0, "trips": 640, "prod": 17280}, {"park": "TR-224", "model": "HOWO-105", "fuel": 5707, "cost": 14912446, "moto": 212.0, "trips": 220, "prod": 5940}, {"park": "TR-225", "model": "HOWO-105", "fuel": 6614, "cost": 17936182, "moto": 211.0, "trips": 239, "prod": 6453}, {"park": "TR-226", "model": "HOWO-105", "fuel": 17739, "cost": 47384323, "moto": 596.0, "trips": 714, "prod": 19278}, {"park": "TR-227", "model": "HOWO-105", "fuel": 18861, "cost": 50112432, "moto": 613.0, "trips": 710, "prod": 19170}, {"park": "TR-228", "model": "HOWO-105", "fuel": 18050, "cost": 48267904, "moto": 623.0, "trips": 712, "prod": 19224}, {"park": "TR-230", "model": "HOWO-105", "fuel": 16621, "cost": 44036002, "moto": 570.0, "trips": 629, "prod": 16983}, {"park": "TR-231", "model": "HOWO-105", "fuel": 17390, "cost": 46029343, "moto": 586.0, "trips": 672, "prod": 18144}, {"park": "TR-232", "model": "HOWO-105", "fuel": 18850, "cost": 50094111, "moto": 623.0, "trips": 690, "prod": 18630}, {"park": "EX-201", "model": "PC-1250 8", "fuel": 38100, "cost": 104512308, "moto": 343.0, "trips": 4475, "prod": 148091}, {"park": "EX-202", "model": "PC-1250 8", "fuel": 48682, "cost": 130143104, "moto": 499.0, "trips": 6440, "prod": 212821}, {"park": "EX-203", "model": "DX-800LC-5B", "fuel": 24000, "cost": 62809768, "moto": 483.6, "trips": 3465, "prod": 105828}, {"park": "EX-204", "model": "CAT 395D", "fuel": 36266, "cost": 96354854, "moto": 608.2, "trips": 6658, "prod": 202443}, {"park": "LD-201", "model": "XCMG-958", "fuel": 7917, "cost": 20941193, "moto": 655.5, "trips": 50120, "prod": 23589829}, {"park": "GR-201", "model": "XCMG-215", "fuel": 5149, "cost": 13713712, "moto": 482.9, "trips": 0, "prod": 0}, {"park": "DZ-201", "model": "CATD8T", "fuel": 13081, "cost": 35429784, "moto": 489.4, "trips": 0, "prod": 0}], "normT": [{"park": "TR-207", "norm": 0.728}, {"park": "TR-209", "norm": 0.7343}, {"park": "TR-220", "norm": 0.7553}, {"park": "TR-216", "norm": 0.7644}, {"park": "TR-211", "norm": 0.766}, {"park": "TR-210", "norm": 0.7738}, {"park": "TR-222", "norm": 0.78}, {"park": "TR-214", "norm": 0.7848}, {"park": "TR-208", "norm": 0.7867}, {"park": "TR-205", "norm": 0.8027}, {"park": "TR-219", "norm": 0.795}, {"park": "TR-201", "norm": 0.7964}, {"park": "TR-212", "norm": 0.7989}, {"park": "TR-221", "norm": 0.8092}, {"park": "TR-206", "norm": 0.8212}, {"park": "TR-202", "norm": 0.83}, {"park": "TR-215", "norm": 0.8293}, {"park": "TR-203", "norm": 0.8479}, {"park": "TR-204", "norm": 1.0148}], "normH": [{"park": "TR-217", "norm": 0.9581}, {"park": "TR-218", "norm": 0.9752}, {"park": "TR-223", "norm": 0.9877}, {"park": "TR-224", "norm": 0.9608}, {"park": "TR-225", "norm": 1.0249}, {"park": "TR-226", "norm": 0.9202}, {"park": "TR-227", "norm": 0.9839}, {"park": "TR-228", "norm": 0.9389}, {"park": "TR-230", "norm": 0.9787}, {"park": "TR-231", "norm": 0.9584}, {"park": "TR-232", "norm": 1.0118}], "busad": [{"park": "LD-201", "model": "XCMG-958", "zor": "Авто ачигч", "fuel": 7917, "cost": 20941193, "moto": 655.5}, {"park": "GR-201", "model": "XCMG-215", "zor": "Автогрейдер", "fuel": 5149, "cost": 13713712, "moto": 482.9}, {"park": "DZ-201", "model": "CATD8T", "zor": "Бульдозер", "fuel": 13081, "cost": 35429784, "moto": 489.4}, {"park": "DZ-202", "model": "D275A-5R", "zor": "Бульдозер", "fuel": 2470, "cost": 6227570, "moto": 82.0}, {"park": "DZ-203", "model": "CATD8T", "zor": "Бульдозер", "fuel": 14906, "cost": 39256853, "moto": 536.5}, {"park": "SV-201", "model": "HYUNDAI", "zor": "Автобус", "fuel": 2085, "cost": 5527736, "moto": 0.0}, {"park": "SV-202", "model": "LUBE TRACK", "zor": "Тосолгоо", "fuel": 1305, "cost": 3460544, "moto": 0.0}, {"park": "SV-203", "model": "HOWO-336", "zor": "Түлшний цистерн", "fuel": 1488, "cost": 3963232, "moto": 0.0}, {"park": "SV-205", "model": "HOWO-336", "zor": "Усны цистерн", "fuel": 280, "cost": 710743, "moto": 0.0}, {"park": "SV-206", "model": "HOWO-336", "zor": "Усны цистерн", "fuel": 260, "cost": 674863, "moto": 0.0}, {"park": "LT-201", "model": "GLT4", "zor": "Гэрэлт цамхаг", "fuel": 370, "cost": 984085, "moto": 0.0}, {"park": "LT-202", "model": "GLT4", "zor": "Гэрэлт цамхаг", "fuel": 310, "cost": 790762, "moto": 0.0}, {"park": "LV-201", "model": "LAND CRIUSER 78", "zor": "Хөнгөн тэрэг", "fuel": 1267, "cost": 3381003, "moto": 0.0}, {"park": "LV-202", "model": "LAND CRIUSER 79", "zor": "Хөнгөн тэрэг", "fuel": 415, "cost": 1074896, "moto": 0.0}, {"park": "LV-203", "model": "LAND CRIUSER 76", "zor": "Хөнгөн тэрэг", "fuel": 418, "cost": 1130471, "moto": 0.0}, {"park": "LV-204", "model": "LAND CRIUSER 76", "zor": "Хөнгөн тэрэг", "fuel": 671, "cost": 1808788, "moto": 0.0}, {"park": "LV-205", "model": "LAND CRIUSER 79", "zor": "Хөнгөн тэрэг", "fuel": 553, "cost": 1479132, "moto": 0.0}, {"park": "LV-206", "model": "LAND CRIUSER 76", "zor": "Хөнгөн тэрэг", "fuel": 298, "cost": 778156, "moto": 0.0}, {"park": "LV-207", "model": "LAND CRIUSER 78", "zor": "Хөнгөн тэрэг", "fuel": 151, "cost": 383294, "moto": 0.0}, {"park": "LV-622", "model": "LAND CRIUSER 78", "zor": "Хөнгөн тэрэг", "fuel": 135, "cost": 395996, "moto": 0.0}, {"park": "LV-626", "model": "LAND CRIUSER 78", "zor": "Хөнгөн тэрэг", "fuel": 460, "cost": 1166455, "moto": 0.0}], "selbeg_cats": [{"model": "TONLY 891C", "count": 10, "tire": 73743804, "total": 198901937}, {"model": "HOWO-105", "count": 4, "tire": 29559114, "total": 95590367}, {"model": "XCMG-215", "count": 1, "tire": 4545454, "total": 4545454}], "tonly_s": [{"park": "TR-201", "qty": 1, "tire": 4204181, "selbeg": 658938, "total": 4863119, "note": "ТҮ болон хойд шпилка, нумны гулгаа сольсон"}, {"park": "TR-202", "qty": 2, "tire": 8408362, "selbeg": 8694564, "total": 17102926, "note": "ТҮ болон 7-р дугуй, залуурын дугуй сольсон"}, {"park": "TR-203", "qty": 0, "tire": 0, "selbeg": 1704385, "total": 1704385, "note": "ТҮ болон 8-р дугуй хагарсан"}, {"park": "TR-204", "qty": 2, "tire": 8408362, "selbeg": 9676908, "total": 18085270, "note": "3,4-р байрлалын дугуй болон ТҮ хийсэн"}, {"park": "TR-205", "qty": 0, "tire": 0, "selbeg": 5619426, "total": 5619426, "note": "Нумны гулгаа болон ТҮ хийсэн"}, {"park": "TR-206", "qty": 4, "tire": 16816724, "selbeg": 20406113, "total": 37222837, "note": "4 ширхэг дугуй хагарсан. Мөн 2 удаагийн ТҮ"}, {"park": "TR-207", "qty": 0, "tire": 0, "selbeg": 4931063, "total": 4931063, "note": "Перда диск эргэсэн, махевик толь хагарсан, ТҮ"}, {"park": "TR-208", "qty": 0, "tire": 0, "selbeg": 3123676, "total": 3123676, "note": "Перда диск эргэсэн техник үйлчилгээ хийсэн"}, {"park": "TR-209", "qty": 0, "tire": 0, "selbeg": 2349368, "total": 2349368, "note": "Нугалрам тасарж хаягдсан ТҮ"}, {"park": "TR-210", "qty": 0, "tire": 0, "selbeg": 2233699, "total": 2233699, "note": "Перда диск эргэсэн техник үйлчилгээ хийсэн"}, {"park": "TR-211", "qty": 2, "tire": 8408362, "selbeg": 11712665, "total": 20121027, "note": "Залуурын дугуйн хээ хууларч перда диск эргэсэн"}, {"park": "TR-212", "qty": 2, "tire": 8408362, "selbeg": 9444201, "total": 17852563, "note": "Залуурын дугуй сольсон, перда диск эргэсэн"}, {"park": "TR-214", "qty": 1, "tire": 4204181, "selbeg": 4276182, "total": 8480363, "note": "9-р дугуй хагарсан"}, {"park": "TR-215", "qty": 1, "tire": 4204181, "selbeg": 4304182, "total": 8508363, "note": "10-р дугуйны бөөр зүсэгдсэн"}, {"park": "TR-216", "qty": 1, "tire": 2272727, "selbeg": 50000, "total": 2322727, "note": "Хөдөлгүүрийн тос багассан"}, {"park": "TR-219", "qty": 2, "tire": 8408362, "selbeg": 22761168, "total": 31169530, "note": "Нумны гулгаа болон центрийн боолт хугарсан"}, {"park": "TR-220", "qty": 0, "tire": 0, "selbeg": 9896343, "total": 9896343, "note": "8-р дугуй болон 10-р дугуй 2 удаа хагарсан"}, {"park": "TR-221", "qty": 0, "tire": 0, "selbeg": 660047, "total": 660047, "note": "Хойд дугуйн шпилканууд тасарсан ТҮ хийсэн"}, {"park": "TR-222", "qty": 0, "tire": 0, "selbeg": 2655206, "total": 2655206, "note": "Перда диск эргэсэн ТҮ хийсэн"}], "howo_s": [{"park": "TR-217", "qty": 0, "tire": 0, "selbeg": 0, "total": 0, "note": ""}, {"park": "TR-218", "qty": 1, "tire": 3284346, "selbeg": 7426238, "total": 10710584, "note": ""}, {"park": "TR-223", "qty": 2, "tire": 6568692, "selbeg": 17787093, "total": 24355785, "note": "Перда диск эргэсэн, 2-р дугуй хагарсан ТҮ"}, {"park": "TR-224", "qty": 0, "tire": 0, "selbeg": 7870743, "total": 7870743, "note": "Залуурын дугуйнууд, форсунк, түлшний насос"}, {"park": "TR-225", "qty": 0, "tire": 0, "selbeg": 1213140, "total": 1213140, "note": "Форсунк, их биений сальник, перда диск сольсон"}, {"park": "TR-226", "qty": 2, "tire": 6568692, "selbeg": 8986879, "total": 15555571, "note": "Лимбэн гол сольсон агаар шүүгч сольсон"}, {"park": "TR-227", "qty": 0, "tire": 0, "selbeg": 905259, "total": 905259, "note": "9-р дугуй хагарсан, перда диск сольсон"}, {"park": "TR-228", "qty": 4, "tire": 13137384, "selbeg": 15682324, "total": 28819708, "note": "Агаар шүүгч болон харандаан голын сальник"}, {"park": "TR-230", "qty": 0, "tire": 0, "selbeg": 3417716, "total": 3417716, "note": "3 удаагийн дугуй хагарч перда диск, ган диск"}, {"park": "TR-231", "qty": 0, "tire": 0, "selbeg": 2741860, "total": 2741860, "note": "Перда диск болон нумны 1-р өнгө сольсон"}, {"park": "TR-232", "qty": 2, "tire": 4545454, "selbeg": 0, "total": 4545454, "note": "Перда диск нисгэрсэн 10-р дугуй хагарсан"}, {"park": "GR-201", "qty": 0, "tire": 0, "selbeg": 0, "total": 0, "note": ""}], "tos_cats": [{"model": "TONLY 891C", "count": 19, "cost": 23010485}, {"model": "HOWO-105", "count": 11, "cost": 3616392}, {"model": "Экскаватор", "count": 4, "cost": 15576224}, {"model": "Авто ачигч", "count": 1, "cost": 310614}, {"model": "Автогрейдер", "count": 1, "cost": 348039}], "tos_detail": [{"model": "TONLY 891C", "park": "TR-201", "moto": 626.0, "cost": 1606727, "per_h": 0, "per_r": 0, "per_m": 0}, {"model": "TONLY 891C", "park": "TR-202", "moto": 632.0, "cost": 1664000, "per_h": 2633, "per_r": 1955, "per_m": 58}, {"model": "TONLY 891C", "park": "TR-203", "moto": 637.0, "cost": 1606727, "per_h": 2522, "per_r": 1971, "per_m": 58}, {"model": "TONLY 891C", "park": "TR-204", "moto": 610.0, "cost": 1519318, "per_h": 2491, "per_r": 2180, "per_m": 64}, {"model": "TONLY 891C", "park": "TR-205", "moto": 442.0, "cost": 1675525, "per_h": 3791, "per_r": 3204, "per_m": 94}, {"model": "TONLY 891C", "park": "TR-206", "moto": 547.0, "cost": 780682, "per_h": 1427, "per_r": 1138, "per_m": 33}, {"model": "TONLY 891C", "park": "TR-207", "moto": 565.0, "cost": 759886, "per_h": 1345, "per_r": 991, "per_m": 29}, {"model": "TONLY 891C", "park": "TR-208", "moto": 607.0, "cost": 1954939, "per_h": 3221, "per_r": 2638, "per_m": 78}, {"model": "TONLY 891C", "park": "TR-209", "moto": 625.0, "cost": 855894, "per_h": 1369, "per_r": 1062, "per_m": 31}, {"model": "TONLY 891C", "park": "TR-210", "moto": 617.0, "cost": 78068, "per_h": 127, "per_r": 100, "per_m": 3}, {"model": "TONLY 891C", "park": "TR-211", "moto": 635.0, "cost": 1042456, "per_h": 1642, "per_r": 1276, "per_m": 38}, {"model": "TONLY 891C", "park": "TR-212", "moto": 629.0, "cost": 1698363, "per_h": 2700, "per_r": 2261, "per_m": 67}, {"model": "TONLY 891C", "park": "TR-214", "moto": 640.0, "cost": 676193, "per_h": 1057, "per_r": 821, "per_m": 24}, {"model": "TONLY 891C", "park": "TR-215", "moto": 607.0, "cost": 754261, "per_h": 1243, "per_r": 994, "per_m": 29}, {"model": "TONLY 891C", "park": "TR-216", "moto": 608.0, "cost": 923310, "per_h": 1519, "per_r": 1166, "per_m": 34}, {"model": "TONLY 891C", "park": "TR-219", "moto": 611.0, "cost": 1751962, "per_h": 2867, "per_r": 2207, "per_m": 65}, {"model": "TONLY 891C", "park": "TR-220", "moto": 643.0, "cost": 78068, "per_h": 121, "per_r": 98, "per_m": 3}, {"model": "TONLY 891C", "park": "TR-221", "moto": 605.0, "cost": 1832144, "per_h": 3028, "per_r": 2355, "per_m": 69}, {"model": "TONLY 891C", "park": "TR-222", "moto": 600.0, "cost": 1751962, "per_h": 2920, "per_r": 2266, "per_m": 67}, {"model": "HOWO-105", "park": "TR-223", "moto": 584.0, "cost": 546614, "per_h": 936, "per_r": 854, "per_m": 32}, {"model": "HOWO-105", "park": "TR-224", "moto": 212.0, "cost": 1359040, "per_h": 6411, "per_r": 6177, "per_m": 229}, {"model": "HOWO-105", "park": "TR-225", "moto": 211.0, "cost": 90159, "per_h": 427, "per_r": 377, "per_m": 14}, {"model": "HOWO-105", "park": "TR-226", "moto": 596.0, "cost": 57273, "per_h": 96, "per_r": 80, "per_m": 3}, {"model": "HOWO-105", "park": "TR-227", "moto": 613.0, "cost": 263879, "per_h": 430, "per_r": 372, "per_m": 14}, {"model": "HOWO-105", "park": "TR-228", "moto": 623.0, "cost": 57273, "per_h": 92, "per_r": 80, "per_m": 3}, {"model": "HOWO-105", "park": "TR-230", "moto": 570.0, "cost": 126071, "per_h": 221, "per_r": 200, "per_m": 7}, {"model": "HOWO-105", "park": "TR-231", "moto": 586.0, "cost": 513341, "per_h": 876, "per_r": 764, "per_m": 28}, {"model": "HOWO-105", "park": "TR-232", "moto": 623.0, "cost": 602742, "per_h": 967, "per_r": 874, "per_m": 32}, {"model": "Экскаватор", "park": "EX-201", "moto": 343.0, "cost": 6915108, "per_h": 20161, "per_r": 1545, "per_m": 47}, {"model": "Экскаватор", "park": "EX-202", "moto": 499.0, "cost": 3629330, "per_h": 7273, "per_r": 564, "per_m": 17}, {"model": "Экскаватор", "park": "EX-203", "moto": 483.6, "cost": 1980222, "per_h": 4095, "per_r": 571, "per_m": 19}, {"model": "Экскаватор", "park": "EX-204", "moto": 608.2, "cost": 3051564, "per_h": 5017, "per_r": 458, "per_m": 15}, {"model": "Авто ачигч", "park": "LD-201", "moto": 655.5, "cost": 310614, "per_h": 474, "per_r": 0, "per_m": 0}, {"model": "Автогрейдер", "park": "GR-201", "moto": 482.9, "cost": 348039, "per_h": 721, "per_r": 0, "per_m": 0}]};
+// ── State ───────────────────────────────────────────────────
+const S={t:null,s:null};
+const CH={};
+const tc='#e8eaf0',gc='rgba(255,255,255,0.04)';
+const BL='#3b82f6',GR='#22c55e',RD='#ef4444',GO='#e8a020',PR='#a855f7',TL='#14b8a6',OR='#f97316',MU='#64748b';
+
+// ── Utils ───────────────────────────────────────────────────
+const N=(v,d=0)=>isNaN(v)||v==null?'—':Number(v).toLocaleString('mn-MN',{minimumFractionDigits:d,maximumFractionDigits:d});
+const SN=v=>isNaN(v)||v==null?0:Number(v);
+const ST=v=>v?String(v).trim():'';
+function mk(id,cfg){if(CH[id])CH[id].destroy();const c=document.getElementById(id);if(c)CH[id]=new Chart(c,cfg)}
+function sw(id,el){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.getElementById('pg-'+id).classList.add('active');el.classList.add('active')}
+function bo(h={}){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:tc,font:{size:9}},grid:{color:gc}},y:{ticks:{color:tc,font:{size:9}},grid:{color:gc}}},...h}}
+function kpi(lbl,val,sub,note='',clr='var(--gold)'){return`<div class="kpi"><div class="kpi-lbl">${lbl}</div><div class="kpi-val" style="color:${clr}">${val}</div><div class="kpi-sub">${sub}</div>${note?`<div class="kpi-note">${note}</div>`:''}</div>`}
+function cat(nm,v,s,c){return`<div class="cat" style="border-color:${c}"><div class="cat-nm">${nm}</div><div class="cat-v" style="color:${c}">${v}</div><div class="cat-s">${s}</div></div>`}
+
+// ── File upload ─────────────────────────────────────────────
+function ev(e){e.preventDefault()}
+function dp(e,k){e.preventDefault();const f=e.dataTransfer.files[0];if(f)pf(f,k)}
+function lf(inp,k){if(inp.files[0])pf(inp.files[0],k)}
+function pf(file,k){
+  const id=k==='t'?'tulsh':k==='s'?'selbeg':k;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      S[k]=XLSX.read(e.target.result,{type:'array'});
+      document.getElementById('fn-'+id).textContent='✓ '+file.name;
+      document.getElementById('c-'+id).classList.add('done');
+      if(S.t&&S.s)document.getElementById('go-btn').classList.add('on');
+    }catch(err){alert('Файл уншихад алдаа: '+err.message);}
+  };
+  r.readAsArrayBuffer(file);
+}
+function reset(){document.getElementById('app').style.display='none';document.getElementById('upload-screen').style.display='flex';S.t=null;S.s=null;['t','s'].forEach(k=>{document.getElementById('fn-'+k).textContent='';document.getElementById('c-'+k).classList.remove('done')});document.getElementById('go-btn').classList.remove('on')}
+
+// ── Sheet finder ────────────────────────────────────────────
+function sh(wb,kws){for(const k of kws){const f=wb.SheetNames.find(s=>s.toLowerCase().includes(k.toLowerCase()));if(f)return wb.Sheets[f]}return null}
+function cv(ws,r,c){const k=XLSX.utils.encode_cell({r:r-1,c:c-1});return ws[k]?ws[k].v:null}
+
+// ══════════════════════════════════════════════════════════════
+// PARSE ALL DATA
+// ══════════════════════════════════════════════════════════════
+function parse(){
+  // If no files uploaded, use embedded data
+  if(!S.t||!S.s){
+    const E=EMBEDDED;
+    return {
+      month:E.month, totFuel:E.tot_fuel, totCost:E.tot_cost,
+      totTrips:E.tot_trips, totProd:E.tot_prod,
+      fuel:E.fuel, normT:E.normT, normH:E.normH, busad:E.busad,
+      selbeg:{cats:E.selbeg_cats, tonly:E.tonly_s, howo:E.howo_s},
+      tos:{cats:E.tos_cats, detail:E.tos_detail}
+    };
+  }
+  // ── Түлш: undsen data ─────────────────────────────────────
+  // R2=header, R3+ data: C1=№,C2=Дэс,C3=Модел,C4=Парк,C5=Зориулалт
+  // C6=Нийт түлш(л), C7=Нийт үнэ(₮), C8=Мото цаг
+  // C10=Нийт рейс, C11=Нийт бүтээл, C12=1м3 норм
+  const wsU=sh(S.t,['undsen data']);
+  const fuel=[];
+  if(wsU){
+    for(let r=3;r<=42;r++){
+      const model=ST(cv(wsU,r,3));
+      const park=ST(cv(wsU,r,4));
+      if(!park||park.length<3) continue;
+      const f=SN(cv(wsU,r,6)),c=SN(cv(wsU,r,7)),m=SN(cv(wsU,r,8)),rp=SN(cv(wsU,r,10)),pr=SN(cv(wsU,r,11)),n12=SN(cv(wsU,r,12));
+      if(f>0||c>0) fuel.push({park,model:model.replace(/ +$/,''),fuel:f,cost:c,moto:m,trips:rp,prod:pr,norm:n12});
+    }
+  }
+
+  // ── Түлш summary: хураангуй ──────────────────────────────
+  // R3C2=month text, R6: C2=нийт л, C4=нийт₮, C6=нийт рейс, C8=нийт бүтээл
+  const wsH=sh(S.t,['хураангуй']);
+  let month='2025 оны 3-р сар',totFuel=0,totCost=0,totTrips=0,totProd=0;
+  if(wsH){
+    const ms=ST(cv(wsH,3,2));
+    const m=ms.match(/\d{4}.*р сар/);if(m)month=m[0];
+    totFuel=SN(cv(wsH,6,2));totCost=SN(cv(wsH,6,4));
+    totTrips=SN(cv(wsH,6,6));totProd=SN(cv(wsH,6,8));
+  }
+
+  // ── Бусад техник ─────────────────────────────────────────
+  // R1=header, R2+ data: C1=№,C2=Модел,C4=Парк,C5=Зориулалт,C6=Түлш,C7=Үнэ
+  const wsB=sh(S.t,['busad tehnik']);
+  const busad=[];
+  if(wsB){
+    for(let r=2;r<=80;r++){
+      const a=cv(wsB,r,1);
+      const model=ST(cv(wsB,r,2));
+      const park=ST(cv(wsB,r,4));
+      const zor=ST(cv(wsB,r,5));
+      const f=SN(cv(wsB,r,6)),c=SN(cv(wsB,r,7)),m=SN(cv(wsB,r,8));
+      if(typeof a==='number'&&park&&f>0){busad.push({seq:a,model,park,zor,fuel:f,cost:c,moto:m});}
+    }
+  }
+
+  // ── tailan-tonly: norm data ───────────────────────────────
+  // R1=header, R2+ data: C2=парк, C4=1м3 норм
+  const wsTT=sh(S.t,['tailan-tonly']);
+  const normT=[];
+  if(wsTT){for(let r=2;r<=22;r++){const pk=ST(cv(wsTT,r,2));const n=SN(cv(wsTT,r,4));if(pk&&n>0&&(pk.startsWith('TR-')||pk.startsWith('EX-')))normT.push({park:pk,norm:n});}}
+
+  // tailan-howo
+  const wsTH=sh(S.t,['tailan-howo']);
+  const normH=[];
+  if(wsTH){for(let r=2;r<=13;r++){const pk=ST(cv(wsTH,r,2));const n=SN(cv(wsTH,r,4));if(pk&&n>0&&pk.startsWith('TR-'))normH.push({park:pk,norm:n});}}
+
+  // ── SELBEG: дугуй-dashboard ──────────────────────────────
+  // Нэгтгэл: R6-8: C2=загвар,C3=тоо,C4=дугуйн зардал,C5=хувь,C6=нийт(сэлбэг+дугуй)
+  // TONLY detail: R13-31: C2=парк,C3=мото,C4=дугуй тоо,C5=дугуйн₮,C6=сэлбэг₮,C7=нийт₮,C11=тайлбар
+  // HOWO detail: R36-47: same cols
+  const wsSD=sh(S.s,['дугуй -dashboard','дугуй-dashboard']);
+  const selbeg={cats:[],tonly:[],howo:[]};
+  if(wsSD){
+    for(let r=6;r<=8;r++){const m=ST(cv(wsSD,r,2));if(m)selbeg.cats.push({model:m,count:SN(cv(wsSD,r,3)),tire:SN(cv(wsSD,r,4)),total:SN(cv(wsSD,r,6))});}
+    // TONLY R13-31
+    for(let r=13;r<=31;r++){const pk=ST(cv(wsSD,r,2));if(pk&&pk!=='Парк')selbeg.tonly.push({park:pk,moto:SN(cv(wsSD,r,3)),qty:SN(cv(wsSD,r,4)),tire:SN(cv(wsSD,r,5)),selbeg_s:SN(cv(wsSD,r,6)),total:SN(cv(wsSD,r,7)),note:ST(cv(wsSD,r,11))});}
+    // HOWO R36-47
+    for(let r=36;r<=47;r++){const pk=ST(cv(wsSD,r,2));if(pk&&pk!=='Парк')selbeg.howo.push({park:pk,moto:SN(cv(wsSD,r,3)),qty:SN(cv(wsSD,r,4)),tire:SN(cv(wsSD,r,5)),selbeg_s:SN(cv(wsSD,r,6)),total:SN(cv(wsSD,r,7)),note:ST(cv(wsSD,r,11))});}
+  }
+
+  // ── TOS: Тос-Dashboard ───────────────────────────────────
+  // Нэгтгэл: R7-11: C2=загвар,C3=тоо,C4=зардал,C5=хувь,C6=дундаж
+  // Detail: R16+: C1=загвар,C2=парк,C3=мото,C4=зардал,C5=цагт,C6=рейсд,C7=м3д
+  const wsTos=sh(S.s,['Тос-Dashboard','тос-dashboard']);
+  const tos={cats:[],detail:[]};
+  if(wsTos){
+    for(let r=7;r<=11;r++){const m=ST(cv(wsTos,r,2));if(m&&m!=='НИЙТ ДҮН'){const cost=cv(wsTos,r,4);if(typeof cost==='number'&&cost>0)tos.cats.push({model:m,count:SN(cv(wsTos,r,3)),cost:cost,avg:SN(cv(wsTos,r,6))});}}
+    for(let r=16;r<=55;r++){
+      const m=ST(cv(wsTos,r,1)),pk=ST(cv(wsTos,r,2));
+      const moto=cv(wsTos,r,3),costRaw=cv(wsTos,r,4),phRaw=cv(wsTos,r,5),prRaw=cv(wsTos,r,6),pmRaw=cv(wsTos,r,7);
+      // Only add if cost is a real number (not header text)
+      if(m&&pk&&pk!=='НИЙТ'&&pk!=='Парк'&&typeof costRaw==='number'&&costRaw>0){
+        tos.detail.push({model:m.replace(/ +$/,''),park:pk,moto:SN(moto),cost:costRaw,per_h:typeof phRaw==='number'?phRaw:0,per_r:typeof prRaw==='number'?prRaw:0,per_m:typeof pmRaw==='number'?pmRaw:0});
+      }
+    }
+  }
+
+  return{fuel,month,totFuel,totCost,totTrips,totProd,busad,normT,normH,selbeg,tos};
+}
+
+// ══════════════════════════════════════════════════════════════
+// BUILD
+// ══════════════════════════════════════════════════════════════
+function buildFromData(D){
+  const ld=document.getElementById('loading');
+  ld.style.display='flex';
+  setTimeout(()=>{
+    try{
+      document.getElementById('m-tag').textContent=D.month;
+      renderOV(D);renderFU(D);renderSE(D);renderTO(D);renderBU(D);
+      document.getElementById('upload-screen').style.display='none';
+      document.getElementById('app').style.display='block';
+    }catch(err){console.error(err);alert('Алдаа: '+err.message);}
+    ld.style.display='none';
+  },300);
+}
+function build(){buildFromData(parse());}
+
+// ══════════════════════════════════════════════════════════════
+// OVERVIEW
+// ══════════════════════════════════════════════════════════════
+function renderOV(D){
+  const{fuel,totCost,totProd,totTrips,selbeg,tos}=D;
+  const tFuel=fuel.filter(m=>m.model.includes('TONLY'));
+  const hFuel=fuel.filter(m=>m.model.includes('HOWO'));
+  const eFuel=fuel.filter(m=>m.park.startsWith('EX-'));
+  const bFuel=fuel.filter(m=>!m.model.includes('TONLY')&&!m.model.includes('HOWO')&&!m.park.startsWith('EX-'));
+
+  const selbegTotal=selbeg.tonly.reduce((a,m)=>a+m.total,0)+selbeg.howo.reduce((a,m)=>a+m.total,0)+393820034;
+  const tosTotal=tos.cats.reduce((a,c)=>a+c.cost,0);
+  const grand=totCost+selbegTotal+tosTotal;
+
+  document.getElementById('ov-tot').textContent=(grand/1e6).toFixed(0)+' сая ₮';
+  document.getElementById('ov-sub').textContent=`Түлш: ${(totCost/1e6).toFixed(0)} сая ₮  |  Сэлбэг & Дугуй: ${(selbegTotal/1e6).toFixed(0)} сая ₮  |  ШТМ: ${(tosTotal/1e6).toFixed(0)} сая ₮`;
+
+  document.getElementById('ov-kpis').innerHTML=[
+    kpi('Нийт уурхайн зардал',(grand/1e6).toFixed(0),'сая ₮','Түлш+Сэлбэг+ШТМ',GO),
+    kpi('Нийт түлш зардал',(totCost/1e6).toFixed(0),'сая ₮','',BL),
+    kpi('Нийт бүтээл',N(totProd),'м³','← Зөвхөн экскаватор',PR),
+    kpi('Нийт рейс',N(totTrips),'рейс','TONLY+HOWO',GR),
+    kpi('Нийт техник',fuel.length,'ширхэг','',OR),
+  ].join('');
+
+  document.getElementById('ov-cats').innerHTML=[
+    cat('TONLY 891C түлш',(tFuel.reduce((a,m)=>a+m.cost,0)/1e6).toFixed(0)+' сая ₮',N(tFuel.reduce((a,m)=>a+m.fuel,0))+' л',BL),
+    cat('HOWO-105 түлш',(hFuel.reduce((a,m)=>a+m.cost,0)/1e6).toFixed(0)+' сая ₮',N(hFuel.reduce((a,m)=>a+m.fuel,0))+' л',GR),
+    cat('Сэлбэг & Дугуй',(selbegTotal/1e6).toFixed(0)+' сая ₮','TONLY+HOWO+EX',PR),
+    cat('ШТМ',(tosTotal/1e6).toFixed(0)+'М ₮','Шатах тослох материал',TL),
+  ].join('');
+
+  const bkData=[
+    {l:'Түлш — TONLY',v:tFuel.reduce((a,m)=>a+m.cost,0),c:BL},
+    {l:'Түлш — HOWO',v:hFuel.reduce((a,m)=>a+m.cost,0),c:GR},
+    {l:'Түлш — Экскаватор',v:eFuel.reduce((a,m)=>a+m.cost,0),c:OR},
+    {l:'Түлш — Бусад',v:bFuel.reduce((a,m)=>a+m.cost,0),c:MU},
+    {l:'Сэлбэг & Дугуй',v:selbegTotal,c:PR},
+    {l:'ШТМ',v:tosTotal,c:TL},
+  ];
+  document.getElementById('ov-bk').innerHTML='<div class="ct">Зардлын задаргаа</div>'+
+    bkData.map(b=>`<div class="b-item"><div class="b-dot" style="background:${b.c}"></div><div class="b-lbl">${b.l}</div><div class="b-amt" style="color:${b.c}">${(b.v/1e6).toFixed(0)}Т</div></div>`).join('');
+
+  mk('c-ov-pie',{type:'doughnut',data:{labels:bkData.map(b=>b.l),datasets:[{data:bkData.map(b=>b.v),backgroundColor:bkData.map(b=>b.c),borderWidth:1,borderColor:'#0d1829'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{color:tc,font:{size:9},boxWidth:9,padding:5}}}}}); 
+
+  // Top best/worst
+  const allNorm=[...D.normT.map(r=>({...r,cat:'TONLY'})),...D.normH.map(r=>({...r,cat:'HOWO'}))];
+  const best=allNorm.sort((a,b)=>a.norm-b.norm).slice(0,5);
+  const worst=selbeg.tonly.sort((a,b)=>b.total-a.total).slice(0,5);
+  document.getElementById('ov-best').innerHTML=best.map((r,i)=>`<div class="t-item"><span class="rn" style="color:${GR}">${i+1}</span><span class="rname">${r.park}</span><span class="rcat">${r.cat}</span><span style="color:${GR}">${r.norm.toFixed(3)} Л/м³</span></div>`).join('');
+  document.getElementById('ov-worst').innerHTML=worst.map((r,i)=>`<div class="t-item"><span class="rn" style="color:${RD}">${i+1}</span><span class="rname" style="color:${BL}">${r.park}</span><span class="rcat">TONLY</span><span style="color:${i===0?RD:OR}">${(r.total/1e6).toFixed(1)}М ₮</span></div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// FUEL
+// ══════════════════════════════════════════════════════════════
+function renderFU(D){
+  const{fuel,totCost,totFuel,totProd,totTrips,normT,normH}=D;
+  const tF=fuel.filter(m=>m.model.includes('TONLY'));
+  const hF=fuel.filter(m=>m.model.includes('HOWO'));
+  const eF=fuel.filter(m=>m.park.startsWith('EX-'));
+  const bF=fuel.filter(m=>!m.model.includes('TONLY')&&!m.model.includes('HOWO')&&!m.park.startsWith('EX-'));
+
+  document.getElementById('f-kpis').innerHTML=[
+    kpi('Нийт зарцуулалт',N(totFuel),'литр','',GO),
+    kpi('Нийт үнийн дүн',(totCost/1e6).toFixed(0),'сая ₮','',RD),
+    kpi('Нийт бүтээл',N(totProd),'м³','← Экскаватор',PR),
+    kpi('Нийт рейс',N(totTrips),'рейс','TONLY+HOWO',GR),
+    kpi('TONLY дундаж норм',(normT.reduce((a,r)=>a+r.norm,0)/Math.max(normT.length,1)).toFixed(3),'Л/м³','',TL),
+  ].join('');
+
+  document.getElementById('f-cats').innerHTML=[
+    cat('TONLY 891C',N(tF.reduce((a,m)=>a+m.fuel,0))+'л',(tF.reduce((a,m)=>a+m.cost,0)/1e6).toFixed(0)+' сая ₮',BL),
+    cat('HOWO-105',N(hF.reduce((a,m)=>a+m.fuel,0))+'л',(hF.reduce((a,m)=>a+m.cost,0)/1e6).toFixed(0)+' сая ₮',GR),
+    cat('Экскаватор',N(eF.reduce((a,m)=>a+m.fuel,0))+'л',(eF.reduce((a,m)=>a+m.cost,0)/1e6).toFixed(0)+' сая ₮',OR),
+    cat('Бусад',N(bF.reduce((a,m)=>a+m.fuel,0))+'л',(bF.reduce((a,m)=>a+m.cost,0)/1e6).toFixed(0)+' сая ₮',MU),
+  ].join('');
+
+  // TONLY norm chart
+  if(normT.length){
+    const avgT=normT.reduce((a,r)=>a+r.norm,0)/normT.length;
+    mk('c-f-t',{type:'bar',data:{labels:normT.map(r=>r.park),datasets:[{data:normT.map(r=>r.norm),borderRadius:3,backgroundColor:normT.map(r=>r.norm<=avgT?GR:r.norm>avgT*1.15?RD:GO)},{type:'line',data:Array(normT.length).fill(avgT),borderColor:'#475569',borderDash:[4,3],borderWidth:1.5,pointRadius:0,label:'Дундаж'}]},options:{...bo(),scales:{x:{ticks:{color:tc,font:{size:8},maxRotation:45,autoSkip:false},grid:{color:gc}},y:{min:Math.min(...normT.map(r=>r.norm))*0.95,ticks:{color:tc,font:{size:9}},grid:{color:gc}}}}});
+  }
+  if(normH.length){
+    const avgH=normH.reduce((a,r)=>a+r.norm,0)/normH.length;
+    mk('c-f-h',{type:'bar',data:{labels:normH.map(r=>r.park),datasets:[{data:normH.map(r=>r.norm),borderRadius:4,backgroundColor:normH.map(r=>r.norm<=avgH?GR:r.norm>avgH*1.15?RD:GO)},{type:'line',data:Array(normH.length).fill(avgH),borderColor:'#475569',borderDash:[4,3],borderWidth:1.5,pointRadius:0}]},options:{...bo(),scales:{x:{ticks:{color:tc,font:{size:9}},grid:{color:gc}},y:{min:Math.min(...normH.map(r=>r.norm))*0.95,ticks:{color:tc,font:{size:9}},grid:{color:gc}}}}});
+  }
+
+  mk('c-f-pie',{type:'doughnut',data:{labels:['TONLY','HOWO','Экскаватор','Бусад'],datasets:[{data:[tF.reduce((a,m)=>a+m.cost,0),hF.reduce((a,m)=>a+m.cost,0),eF.reduce((a,m)=>a+m.cost,0),bF.reduce((a,m)=>a+m.cost,0)],backgroundColor:[BL,GR,OR,MU],borderWidth:1,borderColor:'#0d1829'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{color:tc,font:{size:9},boxWidth:9,padding:5}}}}}); 
+  mk('c-f-bar',{type:'bar',data:{labels:['TONLY','HOWO','Экскаватор','Бусад'],datasets:[{data:[tF.reduce((a,m)=>a+m.fuel,0)/1000,hF.reduce((a,m)=>a+m.fuel,0)/1000,eF.reduce((a,m)=>a+m.fuel,0)/1000,bF.reduce((a,m)=>a+m.fuel,0)/1000],backgroundColor:[BL,GR,OR,MU],borderRadius:5}]},options:bo()});
+
+  // Table
+  const gc6='grid-template-columns:70px 100px 90px 100px 80px 80px';
+  let h=`<div class="tbl-hd" style="${gc6}"><span>Парк</span><span>Модел</span><span>Түлш (л)</span><span>Зардал (₮)</span><span>Мото цаг</span><span>1цагт (₮)</span></div><div class="tbl-bd">`;
+  [['TONLY 891C',tF,BL],['HOWO-105',hF,GR],['Экскаватор',eF,OR],['Бусад',bF,MU]].forEach(([nm,rows,c])=>{
+    if(!rows.length)return;
+    h+=`<div class="sec-hd" style="color:${c}">${nm} — ${rows.length} техник | ${N(rows.reduce((a,m)=>a+m.cost,0))} ₮</div>`;
+    rows.forEach(m=>{const ph=m.moto>0?m.cost/m.moto:0;h+=`<div class="row" style="${gc6}"><span style="font-weight:700;color:${c}">${m.park}</span><span style="color:var(--muted);font-size:10px">${m.model}</span><span>${N(m.fuel)}</span><span>${N(m.cost)}</span><span>${m.moto.toFixed(0)}</span><span>${N(ph)}</span></div>`;});
+  });
+  h+='</div>';
+  document.getElementById('f-tbl').innerHTML=h;
+}
+
+// ══════════════════════════════════════════════════════════════
+// SELBEG
+// ══════════════════════════════════════════════════════════════
+function renderSE(D){
+  const{selbeg}=D;
+  const tT=selbeg.tonly.reduce((a,m)=>a+m.total,0);
+  const hT=selbeg.howo.reduce((a,m)=>a+m.total,0);
+  const eT=393820034;
+  const tire=selbeg.cats.reduce((a,c)=>a+c.tire,0);
+  const grand=tT+hT+eT;
+
+  document.getElementById('s-kpis').innerHTML=[
+    kpi('TONLY нийт зардал',(tT/1e6).toFixed(0),'сая ₮','сэлбэг+дугуй',BL),
+    kpi('HOWO нийт зардал',(hT/1e6).toFixed(0),'сая ₮','сэлбэг+дугуй',GR),
+    kpi('Экскаватор сэлбэг',(eT/1e6).toFixed(0),'сая ₮','',OR),
+    kpi('Нийт дугуйн зардал',(tire/1e6).toFixed(0),'сая ₮','',PR),
+    kpi('Нийт (TONLY+HOWO+EX)',(grand/1e6).toFixed(0),'сая ₮','',RD),
+  ].join('');
+
+  document.getElementById('s-cats').innerHTML=[
+    cat('TONLY сэлбэг',(selbeg.tonly.reduce((a,m)=>a+m.selbeg_s,0)/1e6).toFixed(0)+' сая ₮',selbeg.tonly.filter(m=>m.tire>0).length+' дугуй авсан',BL),
+    cat('TONLY дугуй',(selbeg.tonly.reduce((a,m)=>a+m.tire,0)/1e6).toFixed(0)+' сая ₮','',`rgba(59,130,246,.7)`),
+    cat('HOWO сэлбэг',(selbeg.howo.reduce((a,m)=>a+m.selbeg_s,0)/1e6).toFixed(0)+' сая ₮',selbeg.howo.filter(m=>m.tire>0).length+' дугуй авсан',GR),
+    cat('HOWO дугуй',(selbeg.howo.reduce((a,m)=>a+m.tire,0)/1e6).toFixed(0)+' сая ₮','',`rgba(34,197,94,.7)`),
+  ].join('');
+
+  mk('c-s-bar',{type:'bar',data:{labels:['TONLY сэлбэг','TONLY дугуй','HOWO сэлбэг','HOWO дугуй','EX сэлбэг'],datasets:[{data:[selbeg.tonly.reduce((a,m)=>a+m.selbeg_s,0)/1e6,selbeg.tonly.reduce((a,m)=>a+m.tire,0)/1e6,selbeg.howo.reduce((a,m)=>a+m.selbeg_s,0)/1e6,selbeg.howo.reduce((a,m)=>a+m.tire,0)/1e6,eT/1e6],backgroundColor:[BL,'rgba(59,130,246,.4)',GR,'rgba(34,197,94,.4)',OR],borderRadius:6}]},options:bo()});
+  mk('c-s-pie',{type:'doughnut',data:{labels:selbeg.cats.map(c=>c.model),datasets:[{data:selbeg.cats.map(c=>c.tire),backgroundColor:[BL,GR,MU],borderWidth:1,borderColor:'#0d1829'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{color:tc,font:{size:9},boxWidth:9,padding:5}}}}}); 
+
+  const em=['🔴','🟡','🟡'];
+  document.getElementById('s-t3').innerHTML=selbeg.tonly.sort((a,b)=>b.total-a.total).slice(0,3).map((m,i)=>`
+    <div class="t-item"><span class="rn">${em[i]}</span>
+    <span class="rname" style="color:${BL}">${m.park}</span>
+    <div style="text-align:right">
+      <div style="color:${i===0?RD:OR};font-weight:700;font-size:11px">${(m.total/1e6).toFixed(1)}М ₮</div>
+      <div style="font-size:9px;color:var(--muted)">Д:${(m.tire/1e6).toFixed(1)} С:${(m.selbeg_s/1e6).toFixed(1)}</div>
+    </div></div>`).join('');
+  document.getElementById('s-h3').innerHTML=selbeg.howo.sort((a,b)=>b.total-a.total).slice(0,3).map((m,i)=>`
+    <div class="t-item"><span class="rn">${em[i]}</span>
+    <span class="rname" style="color:${GR}">${m.park}</span>
+    <div style="text-align:right">
+      <div style="color:${i===0?RD:OR};font-weight:700;font-size:11px">${(m.total/1e6).toFixed(1)}М ₮</div>
+      <div style="font-size:9px;color:var(--muted)">Д:${(m.tire/1e6).toFixed(1)} С:${(m.selbeg_s/1e6).toFixed(1)}</div>
+    </div></div>`).join('');
+
+  const gc7='grid-template-columns:70px 80px 110px 110px 110px';
+  let h=`<div class="tbl-hd" style="${gc7}"><span>Парк</span><span>Загвар</span><span>Дугуйн зардал (₮)</span><span>Сэлбэгийн зардал (₮)</span><span>Нийт зардал (₮)</span></div><div class="tbl-bd">`;
+  [['TONLY',selbeg.tonly,BL],['HOWO',selbeg.howo,GR]].forEach(([nm,rows,c])=>{
+    h+=`<div class="sec-hd" style="color:${c}">${nm} — Нийт: ${N(rows.reduce((a,m)=>a+m.total,0))} ₮</div>`;
+    rows.sort((a,b)=>b.total-a.total).forEach(m=>{h+=`<div class="row" style="${gc7}"><span style="font-weight:700;color:${c}">${m.park}</span><span style="font-size:10px;color:var(--muted)">${nm}</span><span>${N(m.tire)}</span><span>${N(m.selbeg_s)}</span><span style="font-weight:600">${N(m.total)}</span></div>`;});
+  });
+  h+='</div>';
+  document.getElementById('s-tbl').innerHTML=h;
+}
+
+// ══════════════════════════════════════════════════════════════
+// TOS
+// ══════════════════════════════════════════════════════════════
+function renderTO(D){
+  const{tos}=D;
+  const total=tos.cats.reduce((a,c)=>a+c.cost,0);
+  const clrs=[BL,GR,OR,MU,MU];
+  document.getElementById('t-kpis').innerHTML=[
+    kpi('Нийт ШТМ зардал',(total/1e6).toFixed(1),'сая ₮','',TL),
+    ...tos.cats.slice(0,4).map((c,i)=>kpi(c.model,(c.cost/1e6).toFixed(1),'сая ₮','',clrs[i])),
+  ].join('');
+
+  mk('c-t-bar',{type:'bar',data:{labels:tos.cats.map(c=>c.model),datasets:[{data:tos.cats.map(c=>c.cost/1e6),backgroundColor:clrs,borderRadius:6}]},options:bo()});
+  mk('c-t-pie',{type:'doughnut',data:{labels:tos.cats.map(c=>c.model),datasets:[{data:tos.cats.map(c=>c.cost),backgroundColor:clrs,borderWidth:1,borderColor:'#0d1829'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{color:tc,font:{size:9},boxWidth:9,padding:5}}}}}); 
+
+  const gc7='grid-template-columns:100px 80px 70px 100px 90px 90px 80px';
+  let h=`<div class="tbl-hd" style="${gc7}"><span>Загвар</span><span>Парк</span><span>Мото</span><span>ШТМ зардал (₮)</span><span>1цагт (₮)</span><span>1рейсд (₮)</span><span>1м³д (₮)</span></div><div class="tbl-bd">`;
+  let cur='';
+  tos.detail.forEach(m=>{
+    const c=m.model.includes('TONLY')?BL:m.model.includes('HOWO')?GR:m.model.includes('Экскав')?OR:MU;
+    if(m.model!==cur){cur=m.model;h+=`<div class="sec-hd" style="color:${c}">${m.model}</div>`;}
+    h+=`<div class="row" style="${gc7}"><span style="font-size:10px;color:var(--muted)">${m.model.substring(0,12)}</span><span style="font-weight:700;color:${c}">${m.park}</span><span>${m.moto.toFixed(0)}</span><span>${N(m.cost)}</span><span>${N(m.per_h)}</span><span>${N(m.per_r)}</span><span>${N(m.per_m)}</span></div>`;
+  });
+  h+='</div>';
+  document.getElementById('t-tbl').innerHTML=h;
+}
+
+// ══════════════════════════════════════════════════════════════
+// BUSAD
+// ══════════════════════════════════════════════════════════════
+function renderBU(D){
+  const{busad}=D;
+  const total=busad.reduce((a,m)=>a+m.cost,0);
+  const totL=busad.reduce((a,m)=>a+m.fuel,0);
+  const top=busad.sort((a,b)=>b.cost-a.cost)[0];
+
+  document.getElementById('b-kpis').innerHTML=[
+    kpi('Нийт техник',busad.length,'ширхэг','',GO),
+    kpi('Нийт зарцуулалт',N(totL),'литр','',BL),
+    kpi('Нийт зардал',(total/1e6).toFixed(0),'сая ₮','',RD),
+    kpi('Хамгийн их',top?.park||'—',(top?.cost/1e6||0).toFixed(1)+' сая ₮','',OR),
+  ].join('');
+
+  const cats={};
+  busad.forEach(m=>{
+    let c='Бусад';
+    if(/Авто ачигч|LD-/.test(m.park)||/ачигч/i.test(m.zor)) c='Ачигч';
+    else if(/DZ-/.test(m.park)||/бульдозер/i.test(m.zor)) c='Бульдозер';
+    else if(/SV-|LV-/.test(m.park)||/автобус|цистерн|тосолгоо|хөнгөн/i.test(m.zor)) c='Үйлчилгээний';
+    else if(/DR-/.test(m.park)||/өрөм/i.test(m.zor)) c='Тэсэлгээний өрөм';
+    m._cat=c;
+    if(!cats[c])cats[c]={fuel:0,cost:0,count:0,c:{Ачигч:BL,Бульдозер:GO,Үйлчилгээний:TL,'Тэсэлгээний өрөм':PR,Бусад:MU}[c]};
+    cats[c].fuel+=m.fuel;cats[c].cost+=m.cost;cats[c].count++;
+  });
+
+  mk('c-b-bar',{type:'bar',indexAxis:'y',data:{labels:busad.map(m=>m.park),datasets:[{data:busad.map(m=>m.cost/1e6),backgroundColor:busad.map(m=>cats[m._cat]?.c||MU),borderRadius:3,label:'Зардал (сая ₮)'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:tc,font:{size:9}},grid:{color:gc}},y:{ticks:{color:tc,font:{size:9}},grid:{color:gc}}}}}); 
+
+  const gc5='grid-template-columns:80px 120px 100px 100px 70px';
+  let h=`<div class="tbl-hd" style="${gc5}"><span>Парк</span><span>Ангилал/Зориулалт</span><span>Түлш (л)</span><span>Зардал (₮)</span><span>Мото цаг</span></div><div class="tbl-bd">`;
+  Object.entries(cats).forEach(([catNm,cd])=>{
+    h+=`<div class="sec-hd" style="color:${cd.c}">${catNm} — ${cd.count}т | ${N(cd.fuel)}л | ${(cd.cost/1e6).toFixed(1)}М₮</div>`;
+    busad.filter(m=>m._cat===catNm).forEach(m=>{h+=`<div class="row" style="${gc5}"><span style="font-weight:700;color:${GO}">${m.park}</span><span style="font-size:10px;color:var(--muted)">${m.zor||m.model}</span><span>${N(m.fuel)}</span><span>${N(m.cost)}</span><span>${m.moto.toFixed(0)}</span></div>`;});
+  });
+  h+='</div>';
+  document.getElementById('b-tbl').innerHTML=h;
+}
+// ── Auto-render on load ─────────────────────────────────────
+window.addEventListener('load',()=>{
+  buildFromData(EMBEDDED);
+  // Also show upload option for updating data
+  document.getElementById('go-btn').textContent='🔄 Excel-ээр шинэчлэх';
+  document.getElementById('go-btn').classList.add('on');
+  document.getElementById('go-btn').style.fontSize='12px';
+  document.getElementById('go-btn').onclick=()=>{
+    document.getElementById('app').style.display='none';
+    document.getElementById('upload-screen').style.display='flex';
+  };
+});
+</script>
+</body>
+</html>
