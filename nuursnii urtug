@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Нүүрсний Өртгийн Тооцоолуур — Топ Ган Дриллинг</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060d18;--bg2:#0a1525;--bg3:#0f1d30;--bg4:#152438;
+  --gold:#e8a020;--gold2:#f5c842;--gold3:rgba(232,160,32,.1);
+  --blue:#3b82f6;--red:#ef4444;--green:#22c55e;--purple:#a855f7;
+  --teal:#14b8a6;--orange:#f97316;
+  --text:#dde5f0;--muted:#4a6080;--border:rgba(255,255,255,0.06);
+  --tech:#3b82f6;--tech-bg:rgba(59,130,246,.08);
+  --labor:#ef4444;--labor-bg:rgba(239,68,68,.08);
+  --other:#22c55e;--other-bg:rgba(34,197,94,.08);
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+
+/* ── HEADER ── */
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.h-logo{display:flex;align-items:center;gap:10px}
+.h-logo-ico{width:32px;height:32px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.h-logo-txt{font-size:11px;letter-spacing:2px;color:var(--gold);font-weight:700;text-transform:uppercase}
+.h-badge{background:var(--gold3);color:var(--gold);font-size:10px;padding:3px 10px;border-radius:20px;border:1px solid rgba(232,160,32,.2);font-family:var(--mono)}
+
+/* ── LAYOUT ── */
+.container{max-width:1100px;margin:0 auto;padding:28px 24px;display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+@media(max-width:900px){.container{grid-template-columns:1fr}}
+
+/* ── SECTION TITLES ── */
+.sec-title{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.sec-dot{width:8px;height:8px;border-radius:2px}
+
+/* ── INPUT GROUPS ── */
+.group{background:var(--bg2);border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:14px}
+.group-header{padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.group-icon{font-size:16px}
+.group-title{font-size:12px;font-weight:700;letter-spacing:.5px}
+.group-total{margin-left:auto;font-family:var(--mono);font-size:13px;font-weight:700}
+
+.input-row{display:grid;grid-template-columns:1fr 160px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border);gap:12px;transition:background .15s}
+.input-row:last-child{border:none}
+.input-row:hover{background:rgba(255,255,255,.02)}
+.input-label{font-size:12px;color:var(--text)}
+.input-sublabel{font-size:10px;color:var(--muted);margin-top:2px;font-style:italic}
+.input-wrap{position:relative;display:flex;align-items:center}
+.input-wrap input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 30px 8px 12px;color:var(--text);font-family:var(--mono);font-size:12px;font-weight:600;transition:all .2s;text-align:right}
+.input-wrap input:focus{outline:none;border-color:var(--gold);background:var(--bg4)}
+.input-wrap input.auto{color:var(--muted);background:rgba(255,255,255,.02);cursor:not-allowed;font-style:italic;font-size:11px}
+.input-unit{position:absolute;right:8px;font-size:10px;color:var(--muted);font-family:var(--mono);pointer-events:none}
+.input-badge{font-size:9px;padding:2px 6px;border-radius:4px;margin-left:6px;font-weight:600}
+.auto-badge{background:rgba(255,255,255,.06);color:var(--muted)}
+.input-badge-auto{background:rgba(100,116,139,.15);color:#94a3b8}
+
+/* ── SIDEBAR RESULT ── */
+.result-panel{position:sticky;top:76px}
+
+.result-card{background:linear-gradient(135deg,rgba(232,160,32,.08),rgba(232,160,32,.03));border:1px solid rgba(232,160,32,.2);border-radius:16px;padding:22px;margin-bottom:14px}
+.result-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;font-family:var(--mono)}
+.result-value{font-size:42px;font-weight:700;font-family:var(--mono);background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;margin-bottom:6px}
+.result-sub{font-size:12px;color:var(--muted)}
+
+/* Breakdown */
+.breakdown{background:var(--bg2);border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:14px}
+.bk-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)}
+.bk-row:last-child{border:none}
+.bk-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.bk-label{font-size:11px;flex:1}
+.bk-pct{font-size:10px;color:var(--muted);font-family:var(--mono);width:40px;text-align:right}
+.bk-amt{font-size:11px;font-weight:700;font-family:var(--mono);width:100px;text-align:right}
+.bk-bar-wrap{width:100%;height:3px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:4px}
+.bk-bar{height:100%;border-radius:2px;transition:width .6s ease}
+
+/* Prod input */
+.prod-card{background:var(--bg2);border-radius:14px;border:1px solid rgba(232,160,32,.2);padding:16px;margin-bottom:14px}
+.prod-row{display:flex;align-items:center;gap:12px}
+.prod-label{font-size:12px;color:var(--text);font-weight:600;flex:1}
+.prod-input-wrap{position:relative;display:flex;align-items:center}
+.prod-input-wrap input{width:140px;background:var(--bg3);border:2px solid var(--gold);border-radius:8px;padding:10px 40px 10px 12px;color:var(--gold);font-family:var(--mono);font-size:14px;font-weight:700;text-align:center}
+.prod-input-wrap input:focus{outline:none;background:var(--bg4)}
+.prod-unit{position:absolute;right:10px;font-size:10px;color:var(--gold);font-family:var(--mono)}
+
+/* Month */
+.month-select{background:var(--bg2);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 12px;border-radius:8px;font-family:var(--mono)}
+
+/* Reset btn */
+.reset-btn{width:100%;background:transparent;border:1px solid var(--border);color:var(--muted);padding:10px;border-radius:8px;font-size:11px;cursor:pointer;letter-spacing:.5px;transition:all .2s;margin-top:6px}
+.reset-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* Bar chart */
+.bar-chart{background:var(--bg2);border-radius:14px;border:1px solid var(--border);padding:16px;margin-bottom:14px}
+.chart-title{font-size:10px;color:var(--gold2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px;font-weight:600}
+.bar-item{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.bar-item:last-child{margin:0}
+.bar-lbl{font-size:10px;color:var(--muted);width:80px;text-align:right;flex-shrink:0}
+.bar-track{flex:1;height:20px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;transition:width .6s ease;min-width:4px}
+.bar-fill span{font-size:9px;font-family:var(--mono);font-weight:700;color:rgba(0,0,0,.7);white-space:nowrap}
+
+/* Scenario compare */
+.scenario{background:var(--bg2);border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-top:14px}
+.sc-head{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.sc-title{font-size:11px;color:var(--gold2);text-transform:uppercase;letter-spacing:.7px;font-weight:600}
+.sc-row{display:grid;grid-template-columns:1fr 1fr 1fr;padding:8px 16px;border-bottom:1px solid var(--border);font-size:11px;font-family:var(--mono)}
+.sc-row:last-child{border:none}
+.sc-hd{color:var(--muted);font-size:9px;letter-spacing:.5px;text-transform:uppercase}
+.sc-good{color:var(--green)}
+.sc-mid{color:var(--gold)}
+.sc-bad{color:var(--red)}
+
+/* Pulse animation */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.recalc{animation:pulse .6s ease}
+
+/* Formatted number input */
+.num-display{position:relative;display:flex;align-items:center}
+.num-display input[type=text]{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 30px 8px 12px;color:var(--text);font-family:var(--mono);font-size:12px;font-weight:600;text-align:right;transition:all .2s}
+.num-display input[type=text]:focus{outline:none;border-color:var(--gold);background:var(--bg4)}
+.num-display input[type=text].auto{color:var(--muted);background:rgba(255,255,255,.02);cursor:not-allowed;font-style:italic}
+.num-display .unit{position:absolute;right:10px;font-size:10px;color:var(--muted);font-family:var(--mono);pointer-events:none}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<div class="header">
+  <div class="h-logo">
+    <div class="h-logo-ico">⛏</div>
+    <div class="h-logo-txt">Топ Ган Дриллинг ХХК</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <select class="month-select" id="month-sel" onchange="setMonth()">
+      <option>2025 оны 1-р сар</option>
+      <option>2025 оны 2-р сар</option>
+      <option selected>2025 оны 3-р сар</option>
+      <option>2025 оны 4-р сар</option>
+      <option>2025 оны 5-р сар</option>
+      <option>2025 оны 6-р сар</option>
+    </select>
+    <span class="h-badge" id="month-tag">3-р сар</span>
+  </div>
+</div>
+
+<div style="padding:16px 28px 0;max-width:1100px;margin:0 auto">
+  <div style="font-size:22px;font-weight:700;background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">
+    Нүүрсний Өртгийн Тооцоолуур
+  </div>
+  <div style="font-size:12px;color:var(--muted)">Тоо оруулахад 1 м³ өртөг автоматаар тооцоологдоно</div>
+</div>
+
+<div class="container">
+  <!-- LEFT: Inputs -->
+  <div>
+
+    <!-- Материалын зардал -->
+    <div class="group" style="border-color:rgba(234,179,8,.2)">
+      <div class="group-header" style="background:rgba(234,179,8,.06);border-color:rgba(234,179,8,.15)">
+        <span class="group-icon">🟡</span>
+        <span class="group-title" style="color:#eab308">МАТЕРИАЛЫН ЗАРДАЛ</span>
+        <span id="mat-status" style="margin-left:auto;font-family:var(--mono);font-size:13px;font-weight:700;color:#eab308">0 ₮</span>
+      </div>
+      <div class="input-row">
+        <div><div class="input-label">⛽ Түлшний зардал</div><div class="input-sublabel">tulsh файлаас автомат татагдана</div></div>
+        <div class="input-wrap"><input type="text" id="m1" value="" oninput="onNumInput(this)" onkeydown="onNumKey(event)" placeholder="0" inputmode="numeric"><span class="input-unit">₮</span></div>
+      </div>
+      <div class="input-row">
+        <div><div class="input-label">🔵 Дугуйн зардал</div><div class="input-sublabel">selbeg файлаас автомат татагдана</div></div>
+        <div class="input-wrap"><input type="text" id="m2" value="" oninput="onNumInput(this)" onkeydown="onNumKey(event)" placeholder="0" inputmode="numeric"><span class="input-unit">₮</span></div>
+      </div>
+      <div class="input-row">
+        <div><div class="input-label">🔧 Сэлбэгийн зардал</div><div class="input-sublabel">selbeg файлаас автомат татагдана</div></div>
+        <div class="input-wrap"><input type="text" id="m3" value="" oninput="onNumInput(this)" onkeydown="onNumKey(event)" placeholder="0" inputmode="numeric"><span class="input-unit">₮</span></div>
+      </div>
+      <div class="input-row">
+        <div><div class="input-label">🛠 Засварын зардал</div><div class="input-sublabel">Гараар оруулна</div></div>
+        <div class="input-wrap"><input type="text" id="m4" value="" oninput="onNumInput(this)" onkeydown="onNumKey(event)" placeholder="0" inputmode="numeric"><span class="input-unit">₮</span></div>
+      </div>
+    </div>
+
+    <!-- Нийт бүтээл -->
+    <div class="prod-card">
+      <div class="sec-title" style="color:var(--gold);margin-bottom:12px">
+        <div class="sec-dot" style="background:var(--gold)"></div>
+        Тухайн сарын нийт бүтээл
+      </div>
+      <div class="prod-row">
+        <div class="prod-label">⚖️ Нийт олборлолт (м³)</div>
+        <div class="prod-input-wrap">
+          <input type="text" id="prod" value="" oninput="onNumInput(this)" onkeydown="onNumKey(event)" placeholder="0" inputmode="numeric" style="width:140px;background:var(--bg3);border:2px solid var(--gold);border-radius:8px;padding:10px 40px 10px 12px;color:var(--gold);font-family:var(--mono);font-size:14px;font-weight:700;text-align:center">
+          <span class="prod-unit">м³</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ТЕХНИКИЙН ЗАРДАЛ -->
+    <div class="group">
+      <div class="group-header" style="background:var(--tech-bg);border-color:rgba(59,130,246,.15)">
+        <span class="group-icon">🔵</span>
+        <span class="group-title" style="color:var(--tech)">ТЕХНИКИЙН ЗАРДАЛ</span>
+        <span class="group-total" id="tot-tech" style="color:var(--tech)">0 ₮</span>
+      </div>
+      <div class="input-row">
+        <div>
+          <div class="input-label">Түрээсийн төлбөр</div>
+          <div class="input-sublabel">Техник бүрийн сарын түрээс</div>
+        </div>
+        <div class="input-wrap">
+          <input type="text" id="t1" value="" oninput="onNumInput(this)" onkeydown="onNumKey(event)" placeholder="0" inputmode="numeric">
+          <span class="input-unit">₮</span>
+        </div>
+      </div>
+      <div class="input-row">
+        <div>
+          <div class="input-label">Зээлийн техникийн элэгдэл</div>
+          <div class="input-sublabel">Анхны өртөг ÷ Ашиглалтын хугацаа</div>
+        </div>
+        <div class="input-wrap">
+          <input type="text" id="t2" value="" oninput="onNumInput(this)" onkeydown="onNumKey(event)" placeholder="0" inputmode="numeric">
+          <span class="input-unit">₮</span>
+        </div>
+      </div>
+      <div class="input-row">
+        <div>
+          <div class="input-label">Зээлийн хүү</div>
+          <div class="input-sublabel">Зээлийн үлдэгдэл × сарын хүү</div>
+        </div>
+        <div class="input-wrap">
+          <input type="text" id="t3" value="" oninput="onNumInput(this)" onkeydown="onNumKey(event)" placeholder="0" inputmode="numeric">
+          <span class="input-unit">₮</span>
+        </div>
+      </div>
+      <div class="input-row">
+        <div>
+          <div class="input-label">Техникийн даатгал</div>
+          <div class="input-sublabel">Жилийн даатгал ÷ 12</div>
+        </div>
+        <div class="input-wrap">
+          <input type="text" id="t4" value="" oninput="onNumInput(this)" onkeydown="onNumKey(event)" placeholder="0" inputmode="numeric">
+          <span class="input-unit">₮</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ХӨДӨЛМӨРИЙН ЗАРДАЛ -->
+    <div class="group">
+      <div class="group-header" style="background:var(--labor-bg);border-color:rgba(239,68,68,.15)">
+        <span class="group-icon">🔴</span>
+        <span class="group-title" style="color:var(--labor)">ХӨДӨЛМӨРИЙН ЗАРДАЛ</span>
+        <span class="group-total" id="tot-labor" style="color:var(--labor)">0 ₮</span>
+      </div>
+      <div class="input-row">
+        <div>
+          <div class="input-label">Цалин (нийт)</div>
+          <div class="input-sublabel">Нийт ажилчдын цалин</div>
+        </div>
+        <div class="input-wrap">
+          <input type="text" id="l1" value="" oninput="onNumInput(this)" onkeydown="onNumKey(event)" placeholder="0" inputmode="numeric">
+          <span class="input-unit">₮</span>
+        </div>
+      </div>
+      <div class="input-row">
+        <div>
+          <div class="input-label">
+            НДШ <span class="input-badge auto-badge">АВТОМАТ</span>
+          </div>
+          <div class="input-sublabel">Цалин × 14% — автоматаар тооцоологдоно</div>
+        </div>
+        <div class="input-wrap">
+          <input type="text" id="l2" value="" class="auto" readonly tabindex="-1">
+          <span class="input-unit">₮</span>
+        </div>
+      </div>
+      <div class="input-row">
+        <div>
+          <div class="input-label">Ажилчдын хоол</div>
+          <div class="input-sublabel">Хоолны мөнгө</div>
+        </div>
+        <div class="input-wrap">
+          <input type="text" id="l3" value="" oninput="onNumInput(this)" onkeydown="onNumKey(event)" placeholder="0" inputmode="numeric">
+          <span class="input-unit">₮</span>
+        </div>
+      </div>
+      <div class="input-row">
+        <div>
+          <div class="input-label">Орон байр / байрны зардал</div>
+          <div class="input-sublabel">Хамт олны байрны зардал</div>
+        </div>
+        <div class="input-wrap">
+          <input type="text" id="l4" value="" oninput="onNumInput(this)" onkeydown="onNumKey(event)" placeholder="0" inputmode="numeric">
+          <span class="input-unit">₮</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- БУСАД ЗАРДАЛ -->
+    <div class="group">
+      <div class="group-header" style="background:var(--other-bg);border-color:rgba(34,197,94,.15)">
+        <span class="group-icon">🟢</span>
+        <span class="group-title" style="color:var(--other)">БУСАД ЗАРДАЛ</span>
+        <span class="group-total" id="tot-other" style="color:var(--other)">0 ₮</span>
+      </div>
+      <div class="input-row">
+        <div>
+          <div class="input-label">Цахилгааны зардал</div>
+          <div class="input-sublabel">Сарын цахилгааны төлбөр</div>
+        </div>
+        <div class="input-wrap">
+          <input type="text" id="o1" value="" oninput="onNumInput(this)" onkeydown="onNumKey(event)" placeholder="0" inputmode="numeric">
+          <span class="input-unit">₮</span>
+        </div>
+      </div>
+      <div class="input-row">
+        <div>
+          <div class="input-label">Усны зардал</div>
+          <div class="input-sublabel">Сарын усны төлбөр</div>
+        </div>
+        <div class="input-wrap">
+          <input type="text" id="o2" value="" oninput="onNumInput(this)" onkeydown="onNumKey(event)" placeholder="0" inputmode="numeric">
+          <span class="input-unit">₮</span>
+        </div>
+      </div>
+      <div class="input-row">
+        <div>
+          <div class="input-label">Нөхөн сэргээлтийн зардал</div>
+          <div class="input-sublabel">Сарын хуваарийн дагуу</div>
+        </div>
+        <div class="input-wrap">
+          <input type="text" id="o3" value="" oninput="onNumInput(this)" onkeydown="onNumKey(event)" placeholder="0" inputmode="numeric">
+          <span class="input-unit">₮</span>
+        </div>
+      </div>
+      <div class="input-row">
+        <div>
+          <div class="input-label">Бусад зардал</div>
+          <div class="input-sublabel">Захиргаа, аялал, бусад</div>
+        </div>
+        <div class="input-wrap">
+          <input type="text" id="o4" value="" oninput="onNumInput(this)" onkeydown="onNumKey(event)" placeholder="0" inputmode="numeric">
+          <span class="input-unit">₮</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: Result panel -->
+  <div class="result-panel">
+
+    <!-- Main result -->
+    <div class="result-card">
+      <div class="result-label">🎯 1 М³ НҮҮРСНИЙ ӨРТӨГ</div>
+      <div class="result-value" id="cost-per-t">0</div>
+      <div class="result-sub">₮ / м³</div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(232,160,32,.15)">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px">
+          <span>Нийт зардал</span>
+          <span id="total-cost" style="font-family:var(--mono);color:var(--text)">0 ₮</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">
+          <span>Нийт бүтээл</span>
+          <span id="total-prod" style="font-family:var(--mono);color:var(--text)">0 м³</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Production input result -->
+    <div class="prod-card" style="margin-bottom:14px">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-family:var(--mono)">Нийт зардлын задаргаа</div>
+      <div class="bk-row">
+        <div class="bk-dot" style="background:var(--tech)"></div>
+        <div style="flex:1">
+          <div class="bk-label">🔵 Техникийн</div>
+          <div class="bk-bar-wrap"><div class="bk-bar" id="bar-tech" style="background:var(--tech);width:0%"></div></div>
+        </div>
+        <div class="bk-pct" id="pct-tech">0%</div>
+        <div class="bk-amt" id="amt-tech" style="color:var(--tech)">0 ₮</div>
+      </div>
+      <div class="bk-row">
+        <div class="bk-dot" style="background:var(--labor)"></div>
+        <div style="flex:1">
+          <div class="bk-label">🔴 Хөдөлмөрийн</div>
+          <div class="bk-bar-wrap"><div class="bk-bar" id="bar-labor" style="background:var(--labor);width:0%"></div></div>
+        </div>
+        <div class="bk-pct" id="pct-labor">0%</div>
+        <div class="bk-amt" id="amt-labor" style="color:var(--labor)">0 ₮</div>
+      </div>
+      <div class="bk-row">
+        <div class="bk-dot" style="background:var(--other)"></div>
+        <div style="flex:1">
+          <div class="bk-label">🟢 Бусад</div>
+          <div class="bk-bar-wrap"><div class="bk-bar" id="bar-other" style="background:var(--other);width:0%"></div></div>
+        </div>
+        <div class="bk-pct" id="pct-other">0%</div>
+        <div class="bk-amt" id="amt-other" style="color:var(--other)">0 ₮</div>
+      </div>
+      <div class="bk-row">
+        <div class="bk-dot" style="background:#eab308"></div>
+        <div style="flex:1">
+          <div class="bk-label">🟡 Материалын</div>
+          <div class="bk-bar-wrap"><div class="bk-bar" id="bar-mat" style="background:#eab308;width:0%"></div></div>
+        </div>
+        <div class="bk-pct" id="pct-mat">0%</div>
+        <div class="bk-amt" id="amt-mat" style="color:#eab308">0 ₮</div>
+      </div>
+    </div>
+
+    <!-- Bar chart: 1м³ өртөг scenario -->
+    <div class="bar-chart">
+      <div class="chart-title">1 м³ өртөг — хэсэг тус бүрийн хувь нэмэр</div>
+      <div class="bar-item">
+        <div class="bar-lbl">Техникийн</div>
+        <div class="bar-track">
+          <div class="bar-fill" id="bc-tech" style="background:var(--tech);width:0%">
+            <span id="bc-tech-v">0</span>
+          </div>
+        </div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-lbl">Хөдөлмөрийн</div>
+        <div class="bar-track">
+          <div class="bar-fill" id="bc-labor" style="background:var(--labor);width:0%">
+            <span id="bc-labor-v">0</span>
+          </div>
+        </div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-lbl">Бусад</div>
+        <div class="bar-track">
+          <div class="bar-fill" id="bc-other" style="background:var(--other);width:0%">
+            <span id="bc-other-v">0</span>
+          </div>
+        </div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-lbl">Материалын</div>
+        <div class="bar-track">
+          <div class="bar-fill" id="bc-mat" style="background:#eab308;width:0%">
+            <span id="bc-mat-v">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scenario table -->
+    <div class="scenario">
+      <div class="sc-head">
+        <div class="sc-title">Бүтээлийн хэмжээ → өртгийн хамаарал</div>
+      </div>
+      <div class="sc-row sc-hd">
+        <div>Бүтээл (м³)</div><div>Нийт зардал</div><div>1м³ өртөг</div>
+      </div>
+      <div id="sc-rows"></div>
+    </div>
+
+    <button class="reset-btn" onclick="resetAll()">↺ Бүгдийг шинэчлэх</button>
+  </div>
+</div>
+
+<script>
+const N=(v,d=0)=>Number(v).toLocaleString('mn-MN',{minimumFractionDigits:d,maximumFractionDigits:d});
+
+// Format: raw → comma separated display
+function fmt(v){
+  const n=parseFloat(String(v).replace(/,/g,''))||0;
+  return n===0?'':n.toLocaleString('mn-MN');
+}
+function unFmt(v){return parseFloat(String(v).replace(/[^0-9.]/g,''))||0;}
+
+function onNumInput(el){
+  const raw=String(el.value).replace(/[^0-9.]/g,'');
+  const n=parseFloat(raw)||0;
+  const pos=el.selectionStart;
+  el.value=n===0?'':n.toLocaleString('mn-MN');
+  calc();
+}
+function onNumKey(e){
+  // Allow: digits, backspace, delete, arrows, tab, comma, period
+  const allowed=[8,9,35,36,37,38,39,40,46];
+  if(allowed.includes(e.keyCode)||/[0-9]/.test(e.key)) return;
+  e.preventDefault();
+}
+
+const G=id=>{
+  const el=document.getElementById(id);
+  if(!el) return 0;
+  return unFmt(el.value);
+};
+const S=(id,v)=>{document.getElementById(id).textContent=v};
+
+function calc(){
+  const tech = G('t1')+G('t2')+G('t3')+G('t4');
+  const salary = G('l1');
+  const ndsh = salary * 0.14;
+  document.getElementById('l2').value = Math.round(ndsh)>0?Math.round(ndsh).toLocaleString('mn-MN'):'';
+  const labor = salary + ndsh + G('l3') + G('l4');
+  const other = G('o1')+G('o2')+G('o3')+G('o4');
+  const mat = G('m1')+G('m2')+G('m3')+G('m4');
+  const total = tech + labor + other + mat;
+  const prod = G('prod');
+  const cpt = prod > 0 ? total / prod : 0;
+
+  // Group totals
+  S('tot-tech',  N(tech)+'₮');
+  S('tot-labor', N(labor)+'₮');
+  S('tot-other', N(other)+'₮');
+
+  // Main result
+  document.getElementById('cost-per-t').textContent = N(cpt);
+  S('total-cost', N(total)+' ₮');
+  S('total-prod',  N(prod)+' м³');
+
+  // Breakdown
+  const pT = total>0 ? tech/total*100 : 0;
+  const pL = total>0 ? labor/total*100 : 0;
+  const pO = total>0 ? other/total*100 : 0;
+  const pM = total>0 ? mat/total*100 : 0;
+
+  // Update mat group header total
+  const matHead = document.getElementById('mat-status');
+  if(matHead) matHead.textContent = N(mat)+'₮';
+
+  document.getElementById('bar-tech').style.width  = pT.toFixed(1)+'%';
+  document.getElementById('bar-labor').style.width = pL.toFixed(1)+'%';
+  document.getElementById('bar-other').style.width = pO.toFixed(1)+'%';
+  document.getElementById('bar-mat').style.width   = pM.toFixed(1)+'%';
+  S('pct-tech',  pT.toFixed(1)+'%');
+  S('pct-labor', pL.toFixed(1)+'%');
+  S('pct-other', pO.toFixed(1)+'%');
+  S('pct-mat',   pM.toFixed(1)+'%');
+  S('amt-tech',  N(tech)+'₮');
+  S('amt-labor', N(labor)+'₮');
+  S('amt-other', N(other)+'₮');
+  S('amt-mat',   N(mat)+'₮');
+
+  // Bar chart per tonne
+  const cT = prod>0?tech/prod:0;
+  const cL = prod>0?labor/prod:0;
+  const cO = prod>0?other/prod:0;
+  const cM = prod>0?mat/prod:0;
+  const maxC = Math.max(cT,cL,cO,cM,1);
+
+  document.getElementById('bc-tech').style.width  = (cT/maxC*100).toFixed(1)+'%';
+  document.getElementById('bc-labor').style.width = (cL/maxC*100).toFixed(1)+'%';
+  document.getElementById('bc-other').style.width = (cO/maxC*100).toFixed(1)+'%';
+  document.getElementById('bc-mat').style.width   = (cM/maxC*100).toFixed(1)+'%';
+  S('bc-tech-v',  N(cT)+'₮');
+  S('bc-labor-v', N(cL)+'₮');
+  S('bc-other-v', N(cO)+'₮');
+  S('bc-mat-v',   N(cM)+'₮');
+
+  // Scenario table: ±20%, ±10%, current
+  const scenarios = [
+    {pct:'-20%', mul:.8,  cls:'sc-good'},
+    {pct:'-10%', mul:.9,  cls:'sc-good'},
+    {pct:'одоо', mul:1.0, cls:'sc-mid'},
+    {pct:'+10%', mul:1.1, cls:'sc-bad'},
+    {pct:'+20%', mul:1.2, cls:'sc-bad'},
+  ];
+  document.getElementById('sc-rows').innerHTML = scenarios.map(s=>{
+    const p = Math.round(prod*s.mul);
+    const c = p>0 ? total/p : 0;
+    return `<div class="sc-row">
+      <div class="${s.cls}">${p>0?N(p):'-'}</div>
+      <div style="color:var(--muted)">${N(total)}₮</div>
+      <div class="${s.cls}" style="font-weight:700">${p>0?N(c)+'₮':'-'}</div>
+    </div>`;
+  }).join('');
+
+  // Pulse animation on result
+  const el = document.getElementById('cost-per-t');
+  el.classList.remove('recalc');
+  void el.offsetWidth;
+  el.classList.add('recalc');
+}
+
+function resetAll(){
+  ['t1','t2','t3','t4','l1','l3','l4','o1','o2','o3','o4','m1','m2','m3','m4','prod'].forEach(id=>{
+    document.getElementById(id).value = 0;
+  });
+  calc();
+}
+
+function setMonth(){
+  const sel = document.getElementById('month-sel');
+  const v = sel.value;
+  const m = v.match(/(\d+)-р сар/);
+  document.getElementById('month-tag').textContent = m ? m[0] : v;
+}
+
+// Init
+calc();
+</script>
+</body>
+</html>
