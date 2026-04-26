@@ -616,7 +616,7 @@ function renderBU(D){
 }
 // ── Auto-render on load ─────────────────────────────────────
 window.addEventListener('load',()=>{
-  buildFromData(EMBEDDED);
+  buildFromData(parse());
   // Also show upload option for updating data
   document.getElementById('go-btn').textContent='🔄 Excel-ээр шинэчлэх';
   document.getElementById('go-btn').classList.add('on');
